@@ -1,38 +1,42 @@
 "use strict";
+/* Board: flat array, row by row. 0|1|2 / 3|4|5 / 6|7|8 */
 const WIN_LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const POSITIONS=["top left","top centre","top right","middle left","centre","middle right","bottom left","bottom centre","bottom right"];
+const NOTES={easy:"Random moves. A gentle first game.",medium:"Usually sensible, but it will occasionally miss something.",hard:"Perfect play. It will not make a mistake."};
 const cells=[...document.querySelectorAll(".cell")];
-const statusEl=document.getElementById("status"), historyEl=document.getElementById("historyList");
+const statusEl=document.getElementById("status"),statusMeta=document.getElementById("statusMeta"),turnDot=document.getElementById("turnDot"),historyEl=document.getElementById("historyList"),difficultyGroup=document.getElementById("difficultyGroup"),difficultyNote=document.getElementById("difficultyNote"),scoreOLabel=document.getElementById("scoreOLabel"),undoBtn=document.getElementById("undoBtn");
 const scoreEls={X:document.getElementById("scoreX"),O:document.getElementById("scoreO"),ties:document.getElementById("scoreTies")};
-const modeEl=document.getElementById("gameMode"), diffEl=document.getElementById("difficulty"), undoBtn=document.getElementById("undoBtn");
-let board=Array(9).fill(""), currentPlayer="X", gameActive=true, history=[], scores={X:0,O:0,ties:0}, lastResult=null, soundOn=true, audioCtx=null;
-function ensureAudio(){ if(!soundOn) return null; try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==="suspended") audioCtx.resume(); return audioCtx; }catch{ return null; } }
-function tone(f0,f1,duration=.12,type="sine",delay=0,vol=.18){ const ctx=ensureAudio(); if(!ctx) return; const t=ctx.currentTime+delay,o=ctx.createOscillator(),g=ctx.createGain(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(Math.max(f1,1),t+duration); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+duration); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t+duration); }
-const playClick=p=>tone(p==="X"?620:420,p==="X"?220:170,.09,"sine",0,.2);
-const playWin=()=>[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,f,.18,"sine",i*.11,.2));
-const playTie=()=>tone(320,140,.35,"triangle",0,.18);
-function winnerOf(b){ for(const line of WIN_LINES){ const [a,c,d]=line; if(b[a]&&b[a]===b[c]&&b[a]===b[d]) return {winner:b[a],line}; } return b.every(Boolean)?{winner:"tie",line:[]}:null; }
-function render(winLine=[]){ cells.forEach((cell,i)=>{ cell.innerHTML=board[i]?`<span>${board[i]}</span>`:""; cell.className=`cell ${board[i]?board[i].toLowerCase():""} ${winLine.includes(i)?"win":""}`; cell.disabled=!gameActive||!!board[i]||(modeEl.value==="ai"&&currentPlayer==="O"); cell.setAttribute("aria-label",`Cell ${i+1}, ${board[i]||"empty"}`); }); scoreEls.X.textContent=scores.X; scoreEls.O.textContent=scores.O; scoreEls.ties.textContent=scores.ties; diffEl.disabled=modeEl.value!=="ai"; undoBtn.disabled=!history.length; historyEl.innerHTML=history.length?history.map((h,i)=>`<li>Move ${i+1}: ${h.player} → cell ${h.index+1}</li>`).join(""):"<li>No moves yet</li>"; if(gameActive) statusEl.textContent=modeEl.value==="ai"?(currentPlayer==="X"?"X's Turn!":"AI (O) is thinking…"):`${currentPlayer}'s Turn!`; }
-function finish(result){ gameActive=false; lastResult=result.winner; if(result.winner==="tie"){ scores.ties++; statusEl.textContent="It's a Draw!"; playTie(); render([]); } else { scores[result.winner]++; statusEl.textContent=modeEl.value==="ai"?(result.winner==="X"?"🎉 X Wins! You beat the AI!":"🤖 O Wins! AI takes this round."):`🎉 ${result.winner} Wins!`; playWin(); render(result.line); } }
-function makeMove(index,player){ board[index]=player; history.push({index,player}); playClick(player); const r=winnerOf(board); if(r) finish(r); else { currentPlayer=player==="X"?"O":"X"; render(); if(modeEl.value==="ai"&&currentPlayer==="O"&&gameActive) setTimeout(aiMove,350); } }
-function randomMove(b){ const e=b.map((v,i)=>v?null:i).filter(v=>v!==null); return e[Math.floor(Math.random()*e.length)]; }
-function findWinningMove(b,player){ for(const i of b.map((v,i)=>v?null:i).filter(v=>v!==null)){ const t=[...b]; t[i]=player; if(winnerOf(t)?.winner===player) return i; } return undefined; }
-function minimax(b,isMax){ const r=winnerOf(b); if(r) return r.winner==="O"?1:r.winner==="X"?-1:0; let best=isMax?-Infinity:Infinity; b.forEach((v,i)=>{ if(!v){ b[i]=isMax?"O":"X"; const s=minimax(b,!isMax); b[i]=""; best=isMax?Math.max(best,s):Math.min(best,s); } }); return best; }
-function bestMove(){ let bestScore=-Infinity,move; board.forEach((v,i)=>{ if(!v){ board[i]="O"; const s=minimax(board,false); board[i]=""; if(s>bestScore){bestScore=s;move=i;} } }); return move; }
-function mediumMove(){ if(Math.random()<0.5){ return findWinningMove(board,"O") ?? findWinningMove(board,"X") ?? (board[4]===""?4:randomMove(board)); } return randomMove(board); }
-function aiMove(){ if(!gameActive) return; const d=diffEl.value; const move=d==="easy"?randomMove(board):d==="medium"?mediumMove():bestMove(); if(move!==undefined) makeMove(move,"O"); }
-function restart(){ board=Array(9).fill(""); currentPlayer="X"; gameActive=true; history=[]; lastResult=null; render(); }
-cells.forEach(cell=>cell.addEventListener("click",()=>{ const i=Number(cell.dataset.index); if(!gameActive||board[i]) return; if(modeEl.value==="ai"&&currentPlayer!=="X") return; makeMove(i,currentPlayer); }));
-document.getElementById("restartBtn").addEventListener("click",restart);
-document.getElementById("resetScoreBtn").addEventListener("click",()=>{ scores={X:0,O:0,ties:0}; restart(); });
-modeEl.addEventListener("change",restart); diffEl.addEventListener("change",restart);
-undoBtn.addEventListener("click",()=>{ if(!history.length) return; if(lastResult){ if(lastResult==="tie")scores.ties--; else scores[lastResult]--; lastResult=null; } const steps=modeEl.value==="ai"?Math.min(2,history.length):1; for(let s=0;s<steps;s++){ const last=history.pop(); if(last) board[last.index]=""; } currentPlayer="X"; if(modeEl.value!=="ai"&&history.length) currentPlayer=history[history.length-1].player==="X"?"O":"X"; gameActive=true; render(); });
-const modal=document.getElementById("prdModal");
-document.getElementById("prdBtn").addEventListener("click",()=>{ modal.classList.remove("hidden"); modal.classList.add("flex"); });
-const closePrd=()=>{ modal.classList.add("hidden"); modal.classList.remove("flex"); };
-document.getElementById("closePrdBtn").addEventListener("click",closePrd);
-modal.addEventListener("click",e=>{ if(e.target===modal) closePrd(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closePrd(); });
-document.getElementById("themeBtn").addEventListener("click",e=>{ const dark=document.documentElement.classList.toggle("dark"); e.currentTarget.setAttribute("aria-pressed",String(dark)); try{localStorage.setItem("ttt-theme",dark?"dark":"light");}catch{} });
-try{ if(localStorage.getItem("ttt-theme")==="dark") document.documentElement.classList.add("dark"); }catch{}
-document.getElementById("soundBtn").addEventListener("click",e=>{ soundOn=!soundOn; e.currentTarget.textContent=`Sound: ${soundOn?"On":"Off"}`; e.currentTarget.setAttribute("aria-pressed",String(soundOn)); if(soundOn) playClick("X"); });
-render();
+let board,current,active,moves,lastResult;
+let mode="ai",difficulty="hard",scores={X:0,O:0,ties:0},soundOn=true,audioCtx=null;
+function audio(){if(!soundOn)return null;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();return audioCtx;}catch{return null;}}
+function tone(from,to,seconds,{type="sine",delay=0,gain=0.15}={}){const ctx=audio();if(!ctx)return;const t=ctx.currentTime+delay,osc=ctx.createOscillator(),vol=ctx.createGain();osc.type=type;osc.frequency.setValueAtTime(from,t);osc.frequency.exponentialRampToValueAtTime(Math.max(to,1),t+seconds);vol.gain.setValueAtTime(gain,t);vol.gain.exponentialRampToValueAtTime(0.001,t+seconds);osc.connect(vol).connect(ctx.destination);osc.start(t);osc.stop(t+seconds);}
+const playMove=p=>tone(p==="X"?540:360,p==="X"?210:160,0.08);
+const playWin=()=>[440,554.37,659.25].forEach((f,i)=>tone(f,f,0.16,{delay:i*0.09}));
+const playDraw=()=>tone(280,190,0.28,{type:"triangle",gain:0.12});
+function resultOf(b){for(const line of WIN_LINES){const[a,c,d]=line;if(b[a]&&b[a]===b[c]&&b[a]===b[d])return{winner:b[a],line};}return b.every(Boolean)?{winner:"draw",line:[]}:null;}
+function emptySquares(b){return b.flatMap((v,i)=>(v?[]:[i]));}
+function randomSquare(b){const e=emptySquares(b);return e[Math.floor(Math.random()*e.length)];}
+function winningSquare(b,player){for(const i of emptySquares(b)){const next=b.slice();next[i]=player;if(resultOf(next)?.winner===player)return i;}return undefined;}
+function minimax(b,computersTurn){const r=resultOf(b);if(r)return r.winner==="O"?1:r.winner==="X"?-1:0;let best=computersTurn?-Infinity:Infinity;for(const i of emptySquares(b)){b[i]=computersTurn?"O":"X";const score=minimax(b,!computersTurn);b[i]="";best=computersTurn?Math.max(best,score):Math.min(best,score);}return best;}
+function bestSquare(){let bestScore=-Infinity,choice;for(const i of emptySquares(board)){board[i]="O";const score=minimax(board,false);board[i]="";if(score>bestScore){bestScore=score;choice=i;}}return choice;}
+function sensibleSquare(){if(Math.random()<0.5)return randomSquare(board);return winningSquare(board,"O")??winningSquare(board,"X")??(board[4]===""?4:randomSquare(board));}
+function computerMove(){if(!active)return;const i=difficulty==="easy"?randomSquare(board):difficulty==="medium"?sensibleSquare():bestSquare();if(i!==undefined)play(i);}
+function setStatus(text,meta,dotClass){statusEl.textContent=text;statusMeta.textContent=meta;turnDot.className="dot"+(dotClass?" "+dotClass:"");}
+function render(winLine=[]){cells.forEach((cell,i)=>{const v=board[i];cell.innerHTML=v?`<span class="glyph">${v}</span>`:"";cell.className="cell"+(v?" "+v.toLowerCase():"")+(winLine.includes(i)?" win":"");cell.disabled=!active||Boolean(v)||(mode==="ai"&&current==="O");cell.setAttribute("aria-label",`${POSITIONS[i]}, ${v||"empty"}`);});scoreEls.X.textContent=scores.X;scoreEls.O.textContent=scores.O;scoreEls.ties.textContent=scores.ties;scoreOLabel.textContent=mode==="ai"?"Computer (O)":"Player O";difficultyGroup.querySelector(".segmented").classList.toggle("is-disabled",mode!=="ai");difficultyNote.textContent=mode==="ai"?NOTES[difficulty]:"Difficulty applies against the computer.";undoBtn.disabled=moves.length===0;historyEl.innerHTML=moves.length?moves.map(m=>`<li>${m.player} — ${POSITIONS[m.index]}</li>`).join(""):`<li class="empty">No moves yet.</li>`;if(!active)return;if(mode==="ai"){if(current==="X")setStatus("Your turn","You are X","");else setStatus("Computer is thinking","Computer is O","o thinking");}else{setStatus(`${current} to move`,"Two players, one device",current==="O"?"o":"");}}
+function finish(result){active=false;lastResult=result.winner;if(result.winner==="draw"){scores.ties+=1;render();setStatus("A draw","No winner this time","");playDraw();return;}scores[result.winner]+=1;render(result.line);setStatus(mode==="ai"?(result.winner==="X"?"You win":"Computer wins"):`${result.winner} wins`,"Start a new game to play again",result.winner==="O"?"o":"");playWin();}
+function play(i){board[i]=current;moves.push({index:i,player:current});playMove(current);const result=resultOf(board);if(result){finish(result);return;}current=current==="X"?"O":"X";render();if(mode==="ai"&&current==="O")window.setTimeout(computerMove,420);}
+function newGame(){board=Array(9).fill("");moves=[];current="X";active=true;lastResult=null;render();}
+function selectGroup(selector,attr,value){document.querySelectorAll(selector).forEach(btn=>{const on=btn.dataset[attr]===value;btn.classList.toggle("is-active",on);btn.setAttribute("aria-pressed",String(on));});}
+document.querySelectorAll("[data-mode]").forEach(btn=>btn.addEventListener("click",()=>{mode=btn.dataset.mode;selectGroup("[data-mode]","mode",mode);newGame();}));
+document.querySelectorAll("[data-difficulty]").forEach(btn=>btn.addEventListener("click",()=>{difficulty=btn.dataset.difficulty;selectGroup("[data-difficulty]","difficulty",difficulty);newGame();}));
+cells.forEach(cell=>cell.addEventListener("click",()=>{const i=Number(cell.dataset.index);if(active&&!board[i]&&!(mode==="ai"&&current!=="X"))play(i);}));
+document.getElementById("restartBtn").addEventListener("click",newGame);
+document.getElementById("resetScoreBtn").addEventListener("click",()=>{scores={X:0,O:0,ties:0};newGame();});
+undoBtn.addEventListener("click",()=>{if(!moves.length)return;if(lastResult){if(lastResult==="draw")scores.ties-=1;else scores[lastResult]-=1;lastResult=null;}const count=mode==="ai"?Math.min(2,moves.length):1;for(let n=0;n<count;n+=1){const m=moves.pop();if(m)board[m.index]="";}current=mode==="ai"||!moves.length?"X":(moves[moves.length-1].player==="X"?"O":"X");active=true;render();});
+const soundBtn=document.getElementById("soundBtn");
+soundBtn.addEventListener("click",()=>{soundOn=!soundOn;soundBtn.textContent=soundOn?"Sound on":"Sound off";soundBtn.setAttribute("aria-pressed",String(soundOn));if(soundOn)playMove("X");});
+const themeBtn=document.getElementById("themeBtn");
+function applyTheme(dark){document.documentElement.classList.toggle("dark",dark);themeBtn.textContent=dark?"Light mode":"Dark mode";themeBtn.setAttribute("aria-pressed",String(dark));try{localStorage.setItem("tic-tac-toe-theme",dark?"dark":"light");}catch{}}
+themeBtn.addEventListener("click",()=>applyTheme(!document.documentElement.classList.contains("dark")));
+try{applyTheme(localStorage.getItem("tic-tac-toe-theme")==="dark");}catch{applyTheme(false);}
+newGame();
