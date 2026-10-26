@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tic-Tac-Toe — Web Game</title>
+<meta name="description" content="Modern responsive Tic-Tac-Toe: Vs AI (Easy/Medium/Hard Minimax) & local 2-player, Web Audio SFX, scores, undo, theme and integrated PRD viewer." />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'};</script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
+<main class="mx-auto max-w-xl px-4 py-8">
+<header class="text-center"><h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">TIC-TAC-TOE</h1><p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Vs AI with Minimax • Local 2-Player • No build tools</p></header>
+<section aria-label="Game controls" class="mt-6 flex flex-wrap justify-center gap-3">
+<label class="text-sm">Mode <select id="gameMode" class="ml-1 rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 dark:border-slate-700"><option value="ai" selected>Vs AI</option><option value="pvp">Vs Player (Local)</option></select></label>
+<label class="text-sm">Difficulty <select id="difficulty" class="ml-1 rounded-lg border px-3 py-2 bg-white dark:bg-slate-800 dark:border-slate-700"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard" selected>Hard</option></select></label>
+</section>
+<section aria-label="Score" class="mt-6 grid grid-cols-3 gap-3 text-center">
+<div class="rounded-2xl bg-white dark:bg-slate-900 p-4 shadow">X Wins<strong id="scoreX" class="block text-3xl">0</strong></div>
+<div class="rounded-2xl bg-white dark:bg-slate-900 p-4 shadow">Ties<strong id="scoreTies" class="block text-3xl">0</strong></div>
+<div class="rounded-2xl bg-white dark:bg-slate-900 p-4 shadow">O Wins<strong id="scoreO" class="block text-3xl">0</strong></div>
+</section>
+<p id="status" aria-live="polite" class="mt-6 text-center text-xl font-bold">X's Turn!</p>
+<section id="board" role="grid" aria-label="Tic tac toe board" class="mt-4 mx-auto grid grid-cols-3 gap-3 w-full max-w-sm aspect-square">
+<button class="cell" data-index="0" role="gridcell" aria-label="Cell 1, empty"></button><button class="cell" data-index="1" role="gridcell" aria-label="Cell 2, empty"></button><button class="cell" data-index="2" role="gridcell" aria-label="Cell 3, empty"></button><button class="cell" data-index="3" role="gridcell" aria-label="Cell 4, empty"></button><button class="cell" data-index="4" role="gridcell" aria-label="Cell 5, empty"></button><button class="cell" data-index="5" role="gridcell" aria-label="Cell 6, empty"></button><button class="cell" data-index="6" role="gridcell" aria-label="Cell 7, empty"></button><button class="cell" data-index="7" role="gridcell" aria-label="Cell 8, empty"></button><button class="cell" data-index="8" role="gridcell" aria-label="Cell 9, empty"></button>
+</section>
+<section class="mt-6 flex flex-wrap justify-center gap-3"><button id="restartBtn" class="btn-primary">Restart Game</button><button id="undoBtn" class="btn">Undo Move</button><button id="resetScoreBtn" class="btn">Reset Scores</button></section>
+<section class="mt-3 flex flex-wrap justify-center gap-3"><button id="prdBtn" class="btn">View PRD</button><button id="themeBtn" class="btn" aria-pressed="false">Toggle Theme: Dark/Light</button><button id="soundBtn" class="btn" aria-pressed="true">Sound: On</button></section>
+<section class="mt-8 rounded-2xl bg-white dark:bg-slate-900 p-4 shadow"><h2 class="font-bold">Move History</h2><ol id="historyList" class="mt-2 list-decimal pl-5 text-sm text-slate-600 dark:text-slate-300"><li>No moves yet</li></ol></section>
+<footer class="mt-8 text-center text-xs text-slate-500">Vanilla HTML5 / CSS3 (Tailwind CDN) / JavaScript ES6+ • Ready for GitHub Pages</footer>
+</main>
+<div id="prdModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="prdTitle">
+<div class="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl">
+<div class="flex items-start justify-between gap-4"><h2 id="prdTitle" class="text-2xl font-extrabold">Product Requirements Document</h2><button id="closePrdBtn" class="btn" aria-label="Close PRD">✕</button></div>
+<div class="prose-prd mt-4 text-sm leading-6">
+<h3>1. Executive Summary</h3><p>Modern, responsive, feature-rich browser Tic-Tac-Toe for casual players and portfolio demonstration. Single-player vs AI (Easy, Medium, Hard), local two-player, synthesized Web Audio SFX, score tracking, move history with undo, and this integrated PRD viewer. Target: casual web users, recruiters/developers viewing the GitHub portfolio. Stack: Vanilla HTML5, CSS3 (Tailwind via CDN), Modern JavaScript (ES6+). Deployment: GitHub Pages (github.io).</p>
+<h3>2. Core Features</h3><ul><li><b>Modes:</b> Player vs AI; Player vs Player (local pass-and-play).</li><li><b>Easy:</b> completely random. <b>Medium:</b> heuristic winning/blocking mixed with random blunders. <b>Hard:</b> unbeatable Minimax (win or draw).</li><li><b>UI/UX:</b> responsive mobile/tablet/desktop, turn indicator/status banner, winning line highlight animation, score tracker (X / Ties / O).</li><li><b>SFX:</b> Web Audio API — no external files. Click = sine frequency drop, Win = ascending arpeggio, Tie = flat descending tone.</li><li><b>Utilities:</b> Undo (single-player), integrated PRD viewer, dark/light theme.</li></ul>
+<h3>3. User Flow</h3><pre>TIC-TAC-TOE [Mode: Vs AI] [Diff: Hard] Score X | Ties | O — 3×3 Board — Status [Restart Game] [Undo Move] [View PRD] [Toggle Theme]</pre>
+<h3>4. Technical Architecture</h3><p><b>Minimax:</b> terminal scores +1 AI win, −1 human win, 0 tie; maximize on AI turn, minimize on opponent turn, pick highest-utility move. <b>Audio:</b> procedural oscillators, avoiding CORS/missing-file failures on GitHub Pages.</p>
+<h3>5. Non-Functional</h3><p>Instant load, zero heavy frameworks/build tools, modern browsers (Chrome/Firefox/Safari/Edge), high-contrast accessible semantic HTML.</p>
+<h3>6. Future Roadmap (v2.0)</h3><ul><li>localStorage all-time scores</li><li>Custom player names</li><li>Online multiplayer via WebSockets (P2P)</li></ul>
+<p>Full specification: see <code>PRD.md</code> in this repository.</p>
+</div></div></div>
+<script src="script.js"></script>
+</body>
+</html>
