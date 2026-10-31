@@ -1,8 +1,9 @@
-# Tic-Tac-Toe
+# Tic-Tac-Toe — Browser Game with Minimax AI
 
 A small tic-tac-toe game that runs entirely in the browser. Play against the computer at three difficulty levels, or with a second player on the same device. There is no build step and there are no dependencies — the game is three plain files.
 
-**Play it:** https://shubhranillayek.github.io/tic-tac-toe/
+**Author:** [Shubhranil Layek](https://github.com/shubhranillayek)  
+**Play it:** [Open Tic-Tac-Toe](https://shubhranillayek.github.io/tic-tac-toe/)
 
 ## Features
 
@@ -63,6 +64,24 @@ The Hard computer player evaluates the rest of the game with minimax: a computer
 Sounds are short oscillator tones created with the Web Audio API when a move is made, so the game needs no audio assets and nothing can fail to load.
 
 Scores are kept in memory for the session only. Refreshing the page starts the scoreboard again.
+
+## Frequently asked questions
+
+### How does the computer player work?
+
+Hard mode uses minimax to evaluate the remaining game tree. Easy mode selects random moves, and Medium mixes random moves with immediate wins and blocks. This game AI is not an LLM and does not call a model API.
+
+### Can I play with another person?
+
+Yes. Local two-player mode lets X and O share one device; online multiplayer is not included.
+
+### Are scores saved after refreshing?
+
+No. Scores are stored in memory for the current page session. Refreshing the page resets the scoreboard.
+
+### Is a backend or API key required?
+
+No. The game runs in the browser using plain HTML, CSS and JavaScript. Sound effects are generated with the Web Audio API.
 
 ## Browser support
 
