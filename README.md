@@ -2,7 +2,7 @@
 
 A small tic-tac-toe game that runs entirely in the browser. Play against the computer at three difficulty levels, or with a second player on the same device. There is no build step and there are no dependencies — the game is three plain files.
 
-**Author:** [Shubhranil Layek](https://github.com/shubhranillayek)  
+**Author:** [Shubhranil Layek](https://shubhranillayek.github.io/) ([GitHub](https://github.com/shubhranillayek))  
 **Play it:** [Open Tic-Tac-Toe](https://shubhranillayek.github.io/tic-tac-toe/)
 
 ## Features
